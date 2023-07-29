@@ -1,4 +1,4 @@
-import { ITask, ITaskCollection } from "../tasks/interfaces.ts";
+import { ITask } from "../tasks/interfaces.ts";
 import { IRunnerOptions, ITaskResult } from "./interfaces.ts";
 import { Message } from "./message_bus.ts";
 

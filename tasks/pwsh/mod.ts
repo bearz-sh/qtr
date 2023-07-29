@@ -1,5 +1,5 @@
 import { cli, cliSync } from "./cli.ts";
-import { IExecOptions, IExecSyncOptions, splat } from "../core/core.ts"
+import { IExecOptions, IExecSyncOptions } from "../core/core.ts"
 
 export interface PwshArgs extends Record<string, unknown> {
     nonInteractive?: boolean
@@ -33,16 +33,19 @@ function converToParams(args: PwshArgs) {
     return params
 }
 
-export function pwsh(args: PwshArgs, options?: IExecOptions) {
+export function pwsh(args: PwshArgs | string[], options?: IExecOptions) {
+    if (Array.isArray(args))
+        return cli(args, options);
+
     const params = converToParams(args);
     return cli(params, options);
 }
 
-export function pwshSync(args: PwshArgs, options?: IExecSyncOptions) {
+export function pwshSync(args: PwshArgs | string[], options?: IExecSyncOptions) {
+    if (Array.isArray(args))
+        return cliSync(args, options);
+    
     const params = converToParams(args);
     return cliSync(params, options);
 }
 
-pwshSync({
-    command: 'Write-Host "Hello World"'
-});

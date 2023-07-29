@@ -32,7 +32,7 @@ export function cli(args?: string[], options?: IExecOptions) {
     return exec("bash", args, options);
 }
 
-export function cliSync(args?: string[], options?: IExecOptions) {
+export function cliSync(args?: string[], options?: IExecSyncOptions) {
     return execSync("bash", args, options);
 }
 

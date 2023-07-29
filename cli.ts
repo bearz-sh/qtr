@@ -2,8 +2,6 @@
 import { TaskCollection } from './pipelines/tasks/task_collection.ts'
 import { HostWriter } from "./dep.ts";
 import { run, handleArgs, setHostWriter, setTasks } from './pipelines/runner/mod.ts'
-import { isAbsolute } from './path/deps';
-import { exists } from './fs/deps.ts';
 
 if (import.meta.main) {
     setTasks(new TaskCollection());

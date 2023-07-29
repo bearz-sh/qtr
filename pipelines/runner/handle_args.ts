@@ -40,7 +40,6 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
         wd = undefined;
     }
 
-    const records : Record<string, string>= {};
     const envFile: string[] = flags["env-file"] ?? [];
     const env: string[] = flags["env"] ?? [];
     let taskFile: string | undefined = undefined;

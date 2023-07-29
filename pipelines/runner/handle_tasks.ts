@@ -2,7 +2,7 @@ import { ITask } from "../tasks/interfaces.ts";
 import { defaultTimeout } from "./constants.ts";
 import { MessageBus } from "./message_bus.ts";
 import { ITaskResult } from "./interfaces.ts";
-import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskTimeoutMessage } from "./messages.ts";
+import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage } from "./messages.ts";
 
 export function handleTask(
     task: ITask,

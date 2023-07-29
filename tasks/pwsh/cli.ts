@@ -27,17 +27,17 @@ registerExe("pwsh", {
 });
 
 // PWSH
-export function pwsh(args?: string[], options?: IExecOptions) {
+export function cli(args?: string[], options?: IExecOptions) {
     return exec("pwsh", args, options);
 }
 
-pwsh.cli = pwsh;
-pwsh.sync = function (args?: string[], options?: IExecOptions) {
+
+export function cliSync(args?: string[], options?: IExecOptions) {
     return execSync("pwsh", args, options);
-};
+}
 
-pwsh.scriptFile = async function (scriptFile: string, options?: IExecOptions) {
-    return await pwsh.cli([
+export async function runFile(scriptFile: string, options?: IExecOptions) {
+    return await cli([
         "-ExecutionPolicy",
         "Bypass",
         "-NoLogo",
@@ -46,10 +46,10 @@ pwsh.scriptFile = async function (scriptFile: string, options?: IExecOptions) {
         "-Command",
         `. ${scriptFile}`,
     ], options);
-};
+}
 
-pwsh.scriptFileSync = function (scriptFile: string, options?: IExecSyncOptions) {
-    return pwsh.sync([
+export function runFileSync(scriptFile: string, options?: IExecSyncOptions) {
+    return cliSync([
         "-ExecutionPolicy",
         "Bypass",
         "-NoLogo",
@@ -58,9 +58,9 @@ pwsh.scriptFileSync = function (scriptFile: string, options?: IExecSyncOptions) 
         "-Command",
         `. ${scriptFile}`,
     ], options);
-};
+}
 
-pwsh.script = async function (script: string, options?: IExecOptions) {
+export async function runScript(script: string, options?: IExecOptions) {
     script = `
 $ErrorActionPreference = 'Stop'
 ${script}
@@ -68,7 +68,7 @@ if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }
 `;
     const scriptFile = await generateScriptFile(script, ".ps1");
     try {
-        return await pwsh.cli([
+        return await cli([
             "-ExecutionPolicy",
             "Bypass",
             "-NoLogo",
@@ -82,9 +82,9 @@ if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }
             await rm(scriptFile);
         }
     }
-};
+}
 
-pwsh.scriptSync = function (script: string, options?: IExecSyncOptions) {
+export function runScriptSync(script: string, options?: IExecSyncOptions) {
     script = `
 $ErrorActionPreference = 'Stop'
 ${script}
@@ -92,7 +92,7 @@ if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }
 `;
     const scriptFile = generateScriptFileSync(script, ".ps1");
     try {
-        return pwsh.sync([
+        return cliSync([
             "-ExecutionPolicy",
             "Bypass",
             "-NoLogo",
@@ -106,4 +106,4 @@ if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }
             rmSync(scriptFile);
         }
     }
-};
+}
