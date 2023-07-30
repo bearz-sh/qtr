@@ -1,5 +1,6 @@
-export type TaskRun = (state?: Map<string, unknown>, signal?: AbortSignal) => Promise<void> | void;
 
+export type TaskReturn = Promise<Record<string, unknown> | void> | Record<string, unknown> | void;
+export type TaskRun = (state?: Map<string, unknown>, signal?: AbortSignal) => TaskReturn;
 export interface ITask {
     id: string;
     name: string;
@@ -8,7 +9,31 @@ export interface ITask {
     timeout?: number;
     force?: boolean;
     skip?: boolean | (() => Promise<boolean>);
-    run(state?: Map<string, unknown>, signal?: AbortSignal): Promise<void> | void;
+    run(state?: Map<string, unknown>, signal?: AbortSignal): TaskReturn;
+}
+
+export interface IPartialTaskCore {
+    id: string
+    name?: string;
+    description?: string;
+    deps?: string[];
+    timeout?: number;
+    force?: boolean;
+    skip?: boolean | (() => Promise<boolean>);
+}
+
+export interface IPartialTask extends IPartialTaskCore {
+    run: TaskRun;
+}
+
+export interface IPartialShellTask extends IPartialTaskCore {
+    shell?: string;
+    script: string;
+}
+
+export interface IPartialShellFileTask extends IPartialTaskCore {
+    shell?: string;
+    file: string;
 }
 
 export interface ITaskBuilder {

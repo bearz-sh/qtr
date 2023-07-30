@@ -1,12 +1,22 @@
 import { Message } from "./message_bus.ts";
 import { red, green, yellow, blue } from "../../dep.ts";
-import { CommandMessage, 
-    TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage,
-TaskResultsMessage,
-UnhandledErrorMessage } from "./messages.ts";
-import { getHostWriter, getTasks } from "./globals.ts";
+import { 
+    CommandMessage, 
+    TaskEndMessage, 
+    TaskSkippedMessage, 
+    TaskStartMessage, 
+    TaskTimeoutMessage,
+    TaskResultsMessage,
+    UnhandledErrorMessage } 
+    from "./messages.ts";
+import { getDebug, getHostWriter, getTasks, getVerbose } from "./globals.ts";
+import { VERSION } from "../../mod_info.ts";
 
 
+export function writeVersion() {
+    const hostWriter = getHostWriter();
+    hostWriter.writeLine(VERSION);
+}
 
 export function listTasks() {
     const tasks = getTasks();
@@ -24,22 +34,23 @@ export function listTasks() {
 function writeHelp() {
     const tasks = getTasks();
     const hostWriter = getHostWriter();
-    hostWriter.writeLine(`Quasar Task Runner version 0.1.0
+    hostWriter.writeLine(`Quasar Task Runner version ${VERSION}
 
 USAGE:
     qtr [...TASK] [OPTIONS]
 
 OPTIONS:
-    -h,   --help
-    -s,   --skip-deps
-    -t,   --timeout
-    -e,   --env
-    -l,   --list
-    -v,   --version
-    -ef,  --env-file
-    -tf,  --task-file
-    -wd,  --working-directory
-          --debug
+    -h|--help                  Print the help information
+    -s|--skip-deps             Skips all task dependencies
+    -t|--timeout               The timeout in seconds for the task runner to complete
+    -e|--env                   Set an environment variable .e.g. -e FOO="bar"
+    -l|--list                  List all available tasks
+    -v|--version               Print the version of the task runner.
+    --ef|--env-file            Set an environment variable from a file .e.g. -ef .env
+    --tf|--task-file           Set the task file to use. Defaults to 
+                               ./quasar_tasks.ts or ./.quasar/tasks.ts
+    --wd|--working-directory   Sets the working directory.
+    --debug                    Sets the debug flag
 
 `);
     if (tasks.size > 0) {
@@ -61,7 +72,7 @@ export function defaultMessageSink(message: Message): void {
         case "task-skipped":
             {
                 const msg = message as TaskSkippedMessage;
-                hostWriter.startGroup(`${msg.taskResult.task.name} (skipped)}`)
+                hostWriter.startGroup(`${msg.taskResult.task.name} (skipped)`)
                 hostWriter.endGroup();
             }
             break;
@@ -101,6 +112,7 @@ export function defaultMessageSink(message: Message): void {
                     hostWriter.error(supportsColor ? red(output) : output);
                 }
 
+                hostWriter.writeLine();
                 hostWriter.endGroup();
            }
             break;
@@ -113,8 +125,12 @@ export function defaultMessageSink(message: Message): void {
                         writeHelp();
                         break;
 
-                    case "list":
+                    case "list-tasks":
                         listTasks();
+                        break;
+
+                    case "version":
+                        writeVersion();
                         break;
                 }
             }
@@ -122,7 +138,13 @@ export function defaultMessageSink(message: Message): void {
         case "unhandled-error":
             {
                 const msg = message as UnhandledErrorMessage;
-                hostWriter.error(msg.error);
+                if (getDebug() || getVerbose())
+                {
+                    hostWriter.error(msg.error.stack ?? msg.error.message);
+                } else {
+                    hostWriter.error(msg.error.message);
+                }
+                
             }
             break;
         case "tasks-summary":
@@ -206,7 +228,6 @@ export function defaultMessageSink(message: Message): void {
                     }
 
                     hostWriter.writeLine(output);
-                   
                 }
                 break;
             }

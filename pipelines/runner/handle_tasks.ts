@@ -3,6 +3,7 @@ import { defaultTimeout } from "./constants.ts";
 import { MessageBus } from "./message_bus.ts";
 import { ITaskResult } from "./interfaces.ts";
 import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage } from "./messages.ts";
+import { underscore } from "../../dep.ts";
 
 export function handleTask(
     task: ITask,
@@ -19,6 +20,7 @@ export function handleTask(
             result.status = "cancelled";
             resolve(result);
         }
+    
 
         const controller = new AbortController();
         const signal = controller.signal;
@@ -42,7 +44,7 @@ export function handleTask(
                 tr
                 .then(r => {
                     if (r !== undefined) {
-                        state.set(`${task.id}.output`, r);
+                        state.set(`tasks.${underscore(task.id)}.outputs`, r);
                     }
 
                     return r;
@@ -53,7 +55,7 @@ export function handleTask(
                 clearTimeout(handle);
                 signal.removeEventListener("abort", onAbort);
                 if (tr !== undefined) {
-                    state.set(`${task.id}.output`, tr);
+                    state.set(`tasks.${underscore(task.id)}.outputs`, tr);
                 }
                 resolve({status: "ok", task, start, end: new Date()});
             }
@@ -109,6 +111,8 @@ export async function handleTasks(
 
         const to = task.timeout ?? timeout ?? defaultTimeout;
         try {
+        
+
             messageBus.send(new TaskStartMessage(task));
             const result = await handleTask(task, state, to, cancellationToken);
             results.push(result);

@@ -42,6 +42,14 @@ export class ListTaskMessage extends CommandMessage
     }
 }
 
+export class VersionMessage extends CommandMessage
+{
+    constructor(options: IRunnerOptions)
+    {
+        super("version", options);
+    }
+}
+
 export class HelpMessage extends CommandMessage
 {
     constructor(options: IRunnerOptions)
@@ -113,5 +121,4 @@ export class TaskEndMessage extends Message
     {
         super("task-end");
     }
-
 }

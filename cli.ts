@@ -4,8 +4,8 @@ import { HostWriter } from "./dep.ts";
 import { run, handleArgs, setHostWriter, setTasks } from './pipelines/runner/mod.ts'
 
 if (import.meta.main) {
-    setTasks(new TaskCollection());
     const hostWriter = new HostWriter();
+    setTasks(new TaskCollection());
     setHostWriter(new HostWriter());
     const options = handleArgs(Deno.args, hostWriter);
     if (!options.taskFile)

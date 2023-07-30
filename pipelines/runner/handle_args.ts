@@ -5,7 +5,7 @@ import { IRunnerOptions } from "./interfaces.ts";
 export function handleArgs(args: string[], hostWriter: IHostWriter) {
     const cmds: string[] = [];
     const flags = parseFlags(args,{
-        boolean: ["skip-deps"],
+        boolean: ["skip-deps", "list", "help", "version"],
         string: ["task-file", "env-file", "env"],
         collect: ["env-file", "env"],
         alias: {
@@ -17,6 +17,7 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
             tf: "task-file",
             l: "list",
             wd: "working-directory",
+            v: "version",
         },
         default: {
             "working-directory": Deno.cwd(),
@@ -27,6 +28,7 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
             "task-file": undefined,
             "env-file": [],
             env: [],
+            version: false,
         },
     });
 
@@ -66,6 +68,8 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
 
     const help = (flags["help"] || flags["h"]) === true;
     const skipDeps = (flags["skip-deps"] || flags["s"]) === true;
+    const list = (flags["list"] || flags["l"]) === true;
+    const version = (flags["version"] || flags["v"]) === true;
 
     const options: IRunnerOptions = {
         cmds,
@@ -77,6 +81,8 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
         envFile: envFile,
         env: env,
         workingDirectory: wd,
+        list: list,
+        version: version,
     }
 
     if (cmds.length === 0) {

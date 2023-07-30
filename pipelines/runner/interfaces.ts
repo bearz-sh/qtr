@@ -25,4 +25,5 @@ export interface IRunnerOptions {
     tasksLoaded?: boolean;
     hostWriter?: IHostWriter;
     workingDirectory?: string;
+    version?: boolean;
 }

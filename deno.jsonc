@@ -9,6 +9,7 @@
         "lineWidth": 120
     },
     "tasks": {
-        "test": "deno test -A -q --unstable"
+        "test": "deno test -A -q --unstable",
+        "qtr": "deno run -A -q --unstable ./cli.ts"
     }
 }

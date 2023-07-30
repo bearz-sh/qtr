@@ -4,7 +4,7 @@ import { defaultMessageSink } from "./default_message_sink.ts";
 import { exists } from "../../fs/deps.ts";
 import { isAbsolute, resolve } from "../../path/deps.ts";
 import { cwd } from "../../process/deps.ts";
-import { HelpMessage, ListTaskMessage, TaskResultsMessage, UnhandledErrorMessage } from "./messages.ts";
+import { HelpMessage, ListTaskMessage, TaskResultsMessage, UnhandledErrorMessage, VersionMessage } from "./messages.ts";
 import { ITask } from "../tasks/interfaces.ts";
 import { setHostWriter, getTasks } from "./globals.ts";
 import { handleTasks } from "./handle_tasks.ts";
@@ -34,7 +34,18 @@ async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError 
         return false;
     }
 
-    await import(taskFile);
+    try {
+        await import(taskFile);
+    } catch(e) {
+        if (e instanceof Error) {
+            bus.send(new UnhandledErrorMessage(e));
+        } else {
+            bus.send(new UnhandledErrorMessage(String(e)));
+        }
+
+        return false;
+    }
+   
     return true;
 }
 
@@ -61,20 +72,25 @@ function detectCycles(tasks: ITask[], bus: MessageBus) {
                 return false;
             }
 
-            resolve(depTask);
+            if(!resolve(depTask))
+                return false;
         }
 
         stack.delete(task.id);
+
+        return true;
     };
 
     for (const task of tasks) {
         if (!resolve(task))
         {
-            return false;
+            // cycle detected
+            return true;
         }
     }
 
-    return true;
+    // no cycles detected
+    return false;
 }
 
 function flattenTasks(tasks: ITask[], bus: MessageBus) : { result: ITask[], failed: boolean } {
@@ -134,6 +150,11 @@ export async function run(
         return 0;
     }
 
+    if(options.version) {
+        bus.send(new VersionMessage(options));
+        return 0;
+    }
+
     let pwd = Deno.cwd();
     if (options.workingDirectory) {
         if (!isAbsolute(options.workingDirectory)) {
@@ -150,6 +171,7 @@ export async function run(
     }
 
     if (options.list) {
+        console.log("list");
         if (options.taskFile) {
             const tasksImported = await importTasks(options, bus);
             if (!tasksImported) {
@@ -241,6 +263,8 @@ export async function run(
     const state = new Map<string, unknown>();
     state.set("debug", false);
     state.set("options", options);
+    env.toObject();
+    state.set("env", env.toObject());
     const timeout = options.timeout ?? 3 * 60;
     let cancellationToken: AbortSignal;
     let cancellationController: AbortController | undefined;
@@ -260,7 +284,7 @@ export async function run(
             return tasks.some(t => t.status !== "ok" && t.status !== "skipped") ? 1 : 0;
         }
 
-        const cyclesDetected = !detectCycles(topLevelTasks, bus);
+        const cyclesDetected = detectCycles(topLevelTasks, bus);
         if (cyclesDetected) {
             return 1;
         }

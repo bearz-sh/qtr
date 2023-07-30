@@ -1,8 +1,8 @@
-import { ITaskBuilder, TaskRun } from "./interfaces.ts";
+import { IPartialTask, ITask, ITaskBuilder, TaskRun } from "./interfaces.ts";
 import { getTasks } from "./task_collection.ts";
 import { ArgumentError } from "../../dep.ts";
 
-
+export function task(task: IPartialTask): ITaskBuilder;
 export function task(id: string, action: TaskRun): ITaskBuilder;
 export function task(id: string, deps: string[], action?: TaskRun): ITaskBuilder;
 export function task(id: string, name: string, action: TaskRun): ITaskBuilder;
@@ -17,6 +17,25 @@ export function task(): ITaskBuilder {
     const timeout: number | undefined = undefined;
 
     switch (arguments.length) {
+        case 1:
+            {
+                if (!(typeof arguments[0] === "object")) {
+                    throw new Error(`Excpected object for argument 'task'`);
+                }
+
+                const task = arguments[0] as IPartialTask;
+                return tasks.add({
+                    id: task.id,
+                    name: task.name ?? task.id,
+                    description: task.description,
+                    deps: task.deps ?? [],
+                    timeout: task.timeout,
+                    run: task.run,
+                    force: task.force,
+                    skip: task.skip,
+                });
+            }
+
         case 2:
             {
                 if (Array.isArray(arguments[1])) {
