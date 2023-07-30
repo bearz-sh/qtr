@@ -42,6 +42,7 @@ async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError 
         if (!taskFile.startsWith("http")) {
             taskFile = `file://${taskFile}`;
         }
+        console.log(taskFile);
         await import(taskFile);
     } catch(e) {
         if (e instanceof Error) {
