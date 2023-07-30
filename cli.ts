@@ -10,7 +10,13 @@ if (import.meta.main) {
     const options = handleArgs(Deno.args, hostWriter);
     if (!options.taskFile)
     {
-        options.taskFile = "./quasar_tasks.ts";
+        let pwd = Deno.cwd();
+        if (pwd.startsWith("https")) {
+            const url = new URL(pwd);
+            pwd = url.pathname;
+        } 
+
+        options.taskFile = `${pwd}/quasar_tasks.ts`;
     }
 
     const exitCode = await run(options);

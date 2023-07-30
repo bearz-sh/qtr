@@ -14,6 +14,10 @@ import { dotenv } from "../../dep.ts";
 async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError = true) {
     let { taskFile, workingDirectory } = options;
     workingDirectory ??= cwd();
+    if (workingDirectory.startsWith("http")) {
+        const url = new URL(workingDirectory);
+        workingDirectory = url.pathname;
+    }
    
     if (!taskFile) {
         taskFile = `${workingDirectory}/quasar_tasks.ts`;

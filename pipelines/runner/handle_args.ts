@@ -40,6 +40,11 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
     let wd = flags["working-directory"] as string || undefined;
     if (typeof wd !== "string") {
         wd = undefined;
+    } else {
+        if (wd.startsWith("http")) {
+            const url = new URL(wd);
+            wd = url.pathname;
+        }
     }
 
     const envFile: string[] = flags["env-file"] ?? [];
