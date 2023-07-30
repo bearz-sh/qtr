@@ -39,6 +39,7 @@ async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError 
     }
 
     try {
+        console.log(taskFile);
         await import(taskFile);
     } catch(e) {
         if (e instanceof Error) {

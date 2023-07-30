@@ -11,7 +11,7 @@ if (import.meta.main) {
     if (!options.taskFile)
     {
         let pwd = Deno.cwd();
-        if (pwd.startsWith("https")) {
+        if (pwd.startsWith("http")) {
             const url = new URL(pwd);
             pwd = url.pathname;
         } 
