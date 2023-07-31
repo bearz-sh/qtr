@@ -1,4 +1,4 @@
-import { IPartialTask, ITask, ITaskBuilder, TaskRun } from "./interfaces.ts";
+import { IPartialTask, ITaskBuilder, TaskRun } from "./interfaces.ts";
 import { getTasks } from "./task_collection.ts";
 import { ArgumentError } from "../../dep.ts";
 

@@ -24,7 +24,7 @@ async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError 
     }
 
     if (!isAbsolute(taskFile)) {
-        taskFile = resolve(workingDirectory, taskFile);
+        taskFile = await Deno.realPath(taskFile);
     }
 
     if (!await exists(taskFile)) {
@@ -42,7 +42,6 @@ async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError 
         if (!taskFile.startsWith("http")) {
             taskFile = `file://${taskFile}`;
         }
-        console.log(taskFile);
         await import(taskFile);
     } catch(e) {
         if (e instanceof Error) {

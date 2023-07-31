@@ -3,13 +3,10 @@ import {
     execSync, 
     exists, 
     existsSync, 
-    findExe, 
-    findExeSync, 
     generateScriptFile, 
     generateScriptFileSync, 
     IExecOptions, 
     IExecSyncOptions, 
-    IS_WINDOWS, 
     registerExe, 
     rm,
     rmSync
@@ -47,7 +44,7 @@ export async function runScript(script: string, options?: IExecOptions) {
             await rm(scriptFile);
         }
     }
-};
+}
 
 export  function runScriptSync(script: string, options?: IExecSyncOptions) {
     const scriptFile = generateScriptFileSync(script, ".js");
@@ -58,4 +55,4 @@ export  function runScriptSync(script: string, options?: IExecSyncOptions) {
             rmSync(scriptFile);
         }
     }
-};
+}

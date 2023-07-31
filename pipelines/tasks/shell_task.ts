@@ -117,11 +117,16 @@ export function shellFileTask(): ITaskBuilder {
                     }
                 }
 
-                const wrap = async function (_state: Map<string, unknown>, signal: AbortSignal): Promise<void> {
+                const wrap = async function (_state: Map<string, unknown>, signal: AbortSignal): Promise<Record<string, unknown>> {
                     const out = await scriptRunner.runFile(shell, file, {
                         signal: signal,
                     });
                     out.throwOrContinue();
+                    return {
+                        exitCode: out.code,
+                        stdout: out.stdout,
+                        stderr: out.stderr,
+                    }
                 };
 
                 return tasks.add({
