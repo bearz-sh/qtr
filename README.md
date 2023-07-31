@@ -13,6 +13,23 @@ objects for fs (file system), os (operating system), path, env (for environment
 variables and the path variable), and ps (process). All importable from the
 `https://deno.land/x/qtr@{VERSION}/mod.ts` file.
 
+## Install
+
+Use deno to install by running `deno install --unstable -qAn qtr "https://deno.land/x/qtr@{VERSION}/cli.ts"`
+where `{VERSION}` is a specific version number.
+
+Shell example.
+
+```bash
+deno install --unstable -qAn qtr "https://deno.land/x/qtr@0.0.3/cli.ts"
+```
+
+To uninstall run:
+
+```bash
+deno uninstall qtr
+```
+
 ## Sample Task File
 
 The task runner looks for a `./quasar_tasks.ts` or a `./.quasar/tasks.ts` file.
