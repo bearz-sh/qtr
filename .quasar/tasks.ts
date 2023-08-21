@@ -1,8 +1,44 @@
-import { ps, shellTask, task, parseAndRun } from "../mod.ts";
+import { ps, shellTask, task, parseAndRun, env, fs } from "../mod.ts";
+
+task("dep1", async (s) => {
+    s.env['x'] = 'y'
+
+    const envFile = s.env['QTR_ENV'];
+    if (envFile) {
+        let content = await fs.readTextFile(envFile);
+        content += "\nMY_VAR=TEST"
+        await fs.writeTextFile(envFile, content);
+    }
+
+    return {
+        "out": 'x'
+    }
+})
+
+task({
+    id: "hello:2",
+    description: "hello world",
+    deps: ["dep1"],
+    run: (state) => {
+        
+        console.log(state.env['x']);
+        console.log(state.env["MY_VAR"]);
+        console.log(state.tasks)
+        console.log(state.task);
+        console.log("hello world from hello task");
+    },
+});
 
 
+
+task("test", () => ps.runSync("echo", "hello world"));
 
 task("default", ["echo"], () => {
+    if(env.has("TEST"))
+    {
+        console.log("TEST is set to " + env.get("TEST"));
+    }
+
     console.log("Hello World!");
 })
 .description("The default task");

@@ -1,13 +1,16 @@
-import { ITask } from "../tasks/interfaces.ts";
+import { ITask, ITaskDefinition, ITaskState } from "../tasks/interfaces.ts";
 import { defaultTimeout } from "./constants.ts";
 import { MessageBus } from "./message_bus.ts";
 import { ITaskResult } from "./interfaces.ts";
-import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage } from "./messages.ts";
-import { underscore } from "../../dep.ts";
+import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage, UnhandledErrorMessage } from "./messages.ts";
+import { dotenv, underscore } from "../../dep.ts";
+import { PsOutput } from "../../tasks/core/core.ts";
+import { TaskState } from "../tasks/task_state.ts";
+import { env, fs } from "../../mod.ts";
 
 export function handleTask(
     task: ITask,
-    state: Map<string, unknown>,
+    state: ITaskState,
     timeout = defaultTimeout,
     cancellationToken: AbortSignal,
     
@@ -20,7 +23,6 @@ export function handleTask(
             result.status = "cancelled";
             resolve(result);
         }
-    
 
         const controller = new AbortController();
         const signal = controller.signal;
@@ -42,9 +44,14 @@ export function handleTask(
             const tr = task.run(state, signal);
             if (tr instanceof Promise) {
                 tr
-                .then(r => {
-                    if (r !== undefined) {
-                        state.set(`tasks.${underscore(task.id)}.outputs`, r);
+                .then(r => {                    
+
+                    if (r !== undefined && r !== null) {
+                        if (r instanceof PsOutput) {
+                            r.throwOrContinue(); 
+                        }
+
+                        state.task.outputs = r as Record<string, unknown>;
                     }
 
                     return r;
@@ -55,7 +62,11 @@ export function handleTask(
                 clearTimeout(handle);
                 signal.removeEventListener("abort", onAbort);
                 if (tr !== undefined) {
-                    state.set(`tasks.${underscore(task.id)}.outputs`, tr);
+                    if (tr instanceof PsOutput) {
+                        tr.throwOrContinue();
+                    }
+
+                    state.task.outputs = tr as Record<string, unknown>;
                 }
                 resolve({status: "ok", task, start, end: new Date()});
             }
@@ -69,35 +80,71 @@ export function handleTask(
     });
 }
 
+function _u(value: string) {
+    return underscore(value).replaceAll(/[:'\/\.]/g, "_");
+}
+
 export async function handleTasks(
     tasks: ITask[], 
-    state: Map<string, unknown>,
+    state: TaskState,
     messageBus: MessageBus, 
     timeout = defaultTimeout,
     cancellationToken: AbortSignal) {
     const results: ITaskResult[] = [];
     let failed = false;
+
+    const taskStates = {} as Record<string, unknown>;
+
+    let nextState = new TaskState(state);
     for (const task of tasks) {
+        const lastState = nextState;
+        nextState = new TaskState(state);
+        nextState.set("env", lastState.env);
+        const taskState : ITaskDefinition = {
+            'id': task.id,
+            'name': task.name,
+            'description': task.description,
+            'timeout': task.timeout,
+            'deps': task.deps,
+            'force': task.force,
+            'skip': typeof task.skip === 'boolean' ? task.skip : undefined,
+            'status': 'running',
+            'outputs': {},
+        }
+
+        taskStates[_u(task.id)] = taskState;
+        nextState.set("tasks", taskStates);
+        nextState.set("task", taskState);
+
         const force = task.force ?? false;
         if (cancellationToken.aborted && !force) {
             const result: ITaskResult = { status: "cancelled", task, start: new Date(), end: new Date() };
             messageBus.send(new TaskCancellationMessage(result, cancellationToken));
             results.push(result);
+            taskState.status = result.status;
             return results;
         }
 
-        if (task.skip) {
+        if (typeof task.skip !== "undefined") {
             let skip = false;
             if (typeof task.skip === "function") {
-                skip = await task.skip();
-            } else {
+                const r = task.skip(nextState);
+                if (r instanceof Promise) {
+                    skip = await r;
+                } else {
+                    skip = r;
+                }
+            } else if (typeof task.skip === "boolean") {
                 skip = task.skip;
             }
+
+            taskState.skip = skip;
 
             if (skip) {
                 const result: ITaskResult = { status: "skipped", task: task, start: new Date(), end: new Date() };
                 messageBus.send(new TaskSkippedMessage(result));
                 results.push(result);
+                taskState.status = result.status;
                 continue;
             }
         }
@@ -106,16 +153,43 @@ export async function handleTasks(
             const result: ITaskResult = { status: "skipped", task: task, start: new Date(), end: new Date() };
             messageBus.send(new TaskSkippedMessage(result));
             results.push(result);
+            taskState.status = result.status;
             continue;
         }
 
         const to = task.timeout ?? timeout ?? defaultTimeout;
         try {
-        
+            
+
 
             messageBus.send(new TaskStartMessage(task));
-            const result = await handleTask(task, state, to, cancellationToken);
+            const result = await handleTask(task, nextState, to, cancellationToken);
+            const envFile = env.get("QTR_ENV")
+            try {
+                if (envFile && await fs.exists(envFile))
+                {
+                    const envContent = await fs.readTextFile(envFile);
+                    if (envContent && envContent.length)
+                    {
+                        const parsed = dotenv.parse(envContent);
+                        for(const key in parsed)
+                        {
+                            nextState.env[key] = parsed[key];
+                            env.set(key, parsed[key])
+                        }
+
+                        // zero out content
+                        await fs.writeTextFile(envFile, "");
+                    }
+                }
+                
+            } catch (e) {
+                messageBus.send(new UnhandledErrorMessage(e));
+            }
+            
+
             results.push(result);
+            taskState.status = result.status;
             switch(result.status)
             {
                 case "timeout":
@@ -137,6 +211,7 @@ export async function handleTasks(
             failed = true;
             const result: ITaskResult = { status: "failed", task, start: new Date(), end: new Date(), e };
             results.push(result);
+            taskState.status = result.status;
             messageBus.send(new TaskEndMessage(result));
         }
     }

@@ -92,6 +92,6 @@
     "https://deno.land/x/retry@v2.0.0/wait/decorators.ts": "8bdb7953fc3408369afc5bba03a1ac285a81fe1472a688418cf8d0391eeef7ff",
     "https://deno.land/x/retry@v2.0.0/wait/options.ts": "159e50c401e5fbb5513aa25cffb703758d9618e80b8a40b6af2ba51d3153a19a",
     "https://deno.land/x/retry@v2.0.0/wait/timeoutError.ts": "61b6b17e26cd16d7f612169185c8e4e63271673c15ad6b8bb4b20fbd9418b1fb",
-    "https://deno.land/x/retry@v2.0.0/wait/wait.ts": "508bd97fced6b35393c358339e9a89d3cef9497dd2d95beaed40a83fef7e3d4f",
+    "https://deno.land/x/retry@v2.0.0/wait/wait.ts": "508bd97fced6b35393c358339e9a89d3cef9497dd2d95beaed40a83fef7e3d4f"
   }
 }

@@ -1,6 +1,28 @@
+import { PsOutput } from "../../tasks/core/core.ts";
 
-export type TaskReturn = Promise<Record<string, unknown> | void> | Record<string, unknown> | void;
-export type TaskRun = (state?: Map<string, unknown>, signal?: AbortSignal) => TaskReturn;
+export interface ITaskDefinition {
+    id: string;
+    name: string;
+    description?: string;
+    deps: string[];
+    timeout?: number;
+    force?: boolean;
+    skip?: boolean;
+    status: TaskStatus | 'running';
+    outputs: Record<string, unknown>;
+}
+
+export interface ITaskState {
+    readonly env: Record<string, string | undefined>;
+    readonly secrets: Record<string, string | undefined>;
+    readonly tasks: Record<string, ITaskDefinition | undefined>;
+    readonly task: ITaskDefinition;
+}
+
+export type TaskReturn = Promise<Record<string, unknown> | PsOutput | void> | Record<string, unknown> | PsOutput | void;
+export type TaskRun = (state: ITaskState, signal?: AbortSignal) => TaskReturn;
+export type TaskStatus = "ok" | "failed" | "timeout" | "skipped" | "cancelled";
+
 export interface ITask {
     id: string;
     name: string;
@@ -8,8 +30,8 @@ export interface ITask {
     deps: string[];
     timeout?: number;
     force?: boolean;
-    skip?: boolean | (() => Promise<boolean>);
-    run(state?: Map<string, unknown>, signal?: AbortSignal): TaskReturn;
+    skip?: boolean | ((state: ITaskState) => Promise<boolean> | boolean);
+    run: TaskRun;
 }
 
 export interface IPartialTaskCore {

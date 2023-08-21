@@ -8,8 +8,10 @@ import { HelpMessage, ListTaskMessage, TaskResultsMessage, UnhandledErrorMessage
 import { ITask } from "../tasks/interfaces.ts";
 import { setHostWriter, getTasks } from "./globals.ts";
 import { handleTasks } from "./handle_tasks.ts";
-import { env } from "../../mod.ts";
+import { env, fs } from "../../mod.ts";
 import { dotenv } from "../../dep.ts";
+import { isDebug } from "https://deno.land/x/quasar@0.0.2/runtime/mod.ts";
+import { TaskState } from "../tasks/task_state.ts";
 
 async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError = true) {
     let { taskFile, workingDirectory } = options;
@@ -178,7 +180,6 @@ export async function run(
     }
 
     if (options.list) {
-        console.log("list");
         if (options.taskFile) {
             const tasksImported = await importTasks(options, bus);
             if (!tasksImported) {
@@ -207,6 +208,7 @@ export async function run(
             const decoder = new TextDecoder("utf-8");
             const content = decoder.decode(await Deno.readFile(envFile));
             const parsed = dotenv.parse(content);
+           
             for (const key in parsed)
             {
                 envVars[key] = parsed[key];
@@ -220,16 +222,29 @@ export async function run(
         for(let i = 0; i < envs.length; i++) 
         {
             const env = envs[i].trim();
-            const parsed = dotenv.parse(env);
-            for (const key in parsed)
-            {
-                envVars[key] = parsed[key];
+            try {
+                const parsed = dotenv.parse(env);
+                for (const key in parsed)
+                {
+                    envVars[key] = parsed[key];
+                }
+            } catch (e) {
+                bus.send(new UnhandledErrorMessage(`unable to parse environment variable: ${env}. ${e}`));
+                return 1;
             }
         }
     }
 
-    for (const key in Object.keys(envVars)) {
-        env.set(key, envVars[key]);
+    if (envVars)
+    {
+        const keys = Object.keys(envVars);
+        if (keys.length > 0)
+        {
+            for (const i in keys) {
+                const key = keys[i];
+                env.set(key, envVars[key]);
+            }
+        }
     }
 
     const tasksImported = await importTasks(options, bus);
@@ -248,7 +263,6 @@ export async function run(
         cmds = ["default"];
     }
 
-  
     const topLevelTasks: ITask[] = [];
     for (const cmd of cmds) {
         const task = tasks.get(cmd);
@@ -267,11 +281,19 @@ export async function run(
         topLevelTasks.push(task);
     }
 
-    const state = new Map<string, unknown>();
-    state.set("debug", false);
-    state.set("options", options);
-    env.toObject();
+    const state = new TaskState();
+    state.set("qtr", {
+        'options': options,
+        'debug': isDebug(),
+    });
+
+
+
+    const envFile = await Deno.makeTempFileSync({prefix: "qtr_env", suffix: ".env" })
+    env.set("QTR_ENV", envFile)
     state.set("env", env.toObject());
+    state.set("tasks", {});
+
     const timeout = options.timeout ?? 3 * 60;
     let cancellationToken: AbortSignal;
     let cancellationController: AbortController | undefined;
@@ -305,6 +327,15 @@ export async function run(
         bus.send(new TaskResultsMessage(tasks));
         return tasks.some(t => t.status !== "ok" && t.status !== "skipped") ? 1 : 0;
     } finally {
+        try {
+            if (await fs.exists(envFile)) {
+                await fs.remove(envFile)
+            }
+        } catch {
+            // do nothing
+        }
+       
+
         if (handle) {
             clearTimeout(handle);
         }
