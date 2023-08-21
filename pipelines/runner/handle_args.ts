@@ -1,5 +1,5 @@
-import { IHostWriter } from "../../dep.ts";
-import { parseFlags } from "../../dep.ts";
+import { IHostWriter } from "../../deps.ts";
+import { parseFlags } from "../../deps.ts";
 import { IRunnerOptions } from "./interfaces.ts";
 
 export function handleArgs(args: string[], hostWriter: IHostWriter) {

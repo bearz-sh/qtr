@@ -1,1 +1,0 @@
-export * from "https://deno.land/x/quasar@0.0.2/fs/mod.ts"

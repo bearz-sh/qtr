@@ -1,4 +1,4 @@
-import { HostWriter, IHostWriter } from "../../dep.ts";
+import { HostWriter, IHostWriter } from "../../deps.ts";
 import { ITaskCollection } from "../tasks/interfaces.ts";
 export { getTasks,setTasks } from "../tasks/task_collection.ts";
 

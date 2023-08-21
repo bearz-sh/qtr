@@ -1,4 +1,4 @@
-import { PsOutput } from "../../tasks/core/core.ts";
+import { PsOutput } from "../../deps.ts";
 
 export interface ITaskState {
     /**

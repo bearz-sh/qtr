@@ -3,10 +3,8 @@ import { defaultTimeout } from "./constants.ts";
 import { MessageBus } from "./message_bus.ts";
 import { ITaskResult } from "./interfaces.ts";
 import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage, UnhandledErrorMessage } from "./messages.ts";
-import { dotenv, underscore } from "../../dep.ts";
-import { PsOutput } from "../../tasks/core/core.ts";
+import { dotenv, underscore, PsOutput, env, fs } from "../../deps.ts";
 import { TaskContext } from "../tasks/task_context.ts";
-import { env, fs } from "../../mod.ts";
 
 export function handleTask(
     task: ITask,

@@ -1,5 +1,5 @@
 import { ITask } from "../tasks/interfaces.ts";
-import { IHostWriter } from "../../dep.ts";
+import { IHostWriter } from "../../deps.ts";
 export type TaskStatus = "ok" | "failed" | "timeout" | "skipped" | "cancelled";
 
 export interface IExecutionResult {

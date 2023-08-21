@@ -1,6 +1,6 @@
 import { IPartialTask, ITaskBuilder, TaskRun } from "./interfaces.ts";
 import { getTasks } from "./task_collection.ts";
-import { ArgumentError } from "../../dep.ts";
+import { ArgumentError } from "../../deps.ts";
 
 export function task(task: IPartialTask): ITaskBuilder;
 export function task(id: string, action: TaskRun): ITaskBuilder;

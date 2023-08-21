@@ -1,5 +1,5 @@
 import { Message } from "./message_bus.ts";
-import { red, green, yellow, blue } from "../../dep.ts";
+import { red, green, yellow, blue } from "../../deps.ts";
 import { 
     CommandMessage, 
     TaskEndMessage, 

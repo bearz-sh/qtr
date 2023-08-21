@@ -1,11 +1,6 @@
-import { IS_WINDOWS, NEW_LINE } from "../../os/deps.ts";
 import { IPartialShellFileTask, IPartialShellTask, ITask, ITaskBuilder, ITaskContext } from "./interfaces.ts";
 import { getTasks } from "./task_collection.ts";
-import { scriptRunner } from "../../tasks/core/script_runner.ts";
-import {} from "../../tasks/bash/register_script_runner.ts";
-import {} from "../../tasks/sh/register_script_runner.ts";
-import {} from "../../tasks/pwsh/register_script_runner.ts";
-import {} from "../../tasks/powershell/register_script_runner.ts";
+import { scriptRunner, os } from "../../deps.ts";
 
 export function shellTask(task: IPartialShellTask) : ITaskBuilder;
 export function shellTask(id: string, shell: string, script: string): ITaskBuilder;
@@ -13,7 +8,7 @@ export function shellTask(id: string, script: string): ITaskBuilder;
 export function shellTask(): ITaskBuilder {
     const tasks = getTasks();
     const id = arguments[0] as string;
-    let shell = IS_WINDOWS ? "powershell" : "bash";
+    let shell = os.isWindows ? "powershell" : "bash";
     let script = "";
     switch (arguments.length) {
         case 1:
@@ -88,7 +83,7 @@ export function shellFileTask(): ITaskBuilder {
     const tasks = getTasks();
     const id = arguments[0] as string;
 
-    let shell = IS_WINDOWS ? "powershell" : "bash";
+    let shell = os.isWindows ? "powershell" : "bash";
     let file = "";
     switch (arguments.length) {
         case 1: 
@@ -102,7 +97,7 @@ export function shellFileTask(): ITaskBuilder {
                 shell = task.shell ?? shell;
                 if (!shell) {
                     const text = Deno.readTextFileSync(file);
-                    const firstLine = text.split(NEW_LINE)[0];
+                    const firstLine = text.split(os.newLine)[0];
                     if (firstLine.startsWith("#!")) {
                         const cmd = firstLine.substring(2).trim();
                         const parts = cmd.split(" ").map(s => s.trim()).filter(s => s.length > 0);

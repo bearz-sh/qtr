@@ -1,21 +1,17 @@
 import { IRunnerOptions } from "./interfaces.ts";
 import { IMessageSink, MessageBus } from "./message_bus.ts";
 import { defaultMessageSink } from "./default_message_sink.ts";
-import { exists } from "../../fs/deps.ts";
-import { isAbsolute, resolve } from "../../path/deps.ts";
-import { cwd } from "../../process/deps.ts";
 import { HelpMessage, ListTaskMessage, TaskResultsMessage, UnhandledErrorMessage, VersionMessage } from "./messages.ts";
 import { ITask } from "../tasks/interfaces.ts";
 import { setHostWriter, getTasks } from "./globals.ts";
 import { handleTasks } from "./handle_tasks.ts";
-import { env, fs } from "../../mod.ts";
-import { dotenv } from "../../dep.ts";
+import { dotenv, env, fs, path, ps } from "../../deps.ts";
 import { isDebug } from "https://deno.land/x/quasar@0.0.2/runtime/mod.ts";
 import { TaskContext } from "../tasks/task_context.ts";
 
 async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError = true) {
     let { taskFile, workingDirectory } = options;
-    workingDirectory ??= cwd();
+    workingDirectory ??= ps.cwd;
     if (workingDirectory.startsWith("http")) {
         const url = new URL(workingDirectory);
         workingDirectory = url.pathname;
@@ -25,15 +21,15 @@ async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError 
         taskFile = `${workingDirectory}/quasar_tasks.ts`;
     }
 
-    if (!isAbsolute(taskFile)) {
+    if (!path.isAbsolute(taskFile)) {
         taskFile = await Deno.realPath(taskFile);
     }
 
-    if (!await exists(taskFile)) {
+    if (!await fs.exists(taskFile)) {
         taskFile = `${workingDirectory}/.quasar/tasks.ts`;
     }
 
-    if (!await exists(taskFile)) {
+    if (!await fs.exists(taskFile)) {
         if (writeError) {
             bus.send(new UnhandledErrorMessage(new Error(`Unable to find task file: ${taskFile}`)));
         }
@@ -166,11 +162,11 @@ export async function run(
 
     let pwd = Deno.cwd();
     if (options.workingDirectory) {
-        if (!isAbsolute(options.workingDirectory)) {
-            options.workingDirectory = resolve(pwd, options.workingDirectory);
+        if (!path.isAbsolute(options.workingDirectory)) {
+            options.workingDirectory = path.resolve(pwd, options.workingDirectory);
         }
 
-        if (!await exists(options.workingDirectory)) {
+        if (!options.workingDirectory || !await fs.exists(options.workingDirectory)) {
             bus.send(new UnhandledErrorMessage(`Working directory not found: ${options.workingDirectory}`));
             return 1;
         }
@@ -196,11 +192,11 @@ export async function run(
         const envFiles = options.envFile.map(f => String(f).trim());
         for(let i = 0; i < envFiles.length; i++) {
             let envFile = envFiles[i];
-            if (!isAbsolute(envFile)) {
-                envFile = resolve(pwd, envFile);
+            if (!path.isAbsolute(envFile)) {
+                envFile = path.resolve(pwd, envFile);
             }
     
-            if (!await exists(envFile)) {
+            if (!await fs.exists(envFile)) {
                 bus.send(new UnhandledErrorMessage(`Environment file not found: ${options.envFile}`));
                 return 1;
             }
