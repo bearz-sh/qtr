@@ -11,7 +11,7 @@ import { handleTasks } from "./handle_tasks.ts";
 import { env, fs } from "../../mod.ts";
 import { dotenv } from "../../dep.ts";
 import { isDebug } from "https://deno.land/x/quasar@0.0.2/runtime/mod.ts";
-import { TaskState } from "../tasks/task_state.ts";
+import { TaskContext } from "../tasks/task_context.ts";
 
 async function importTasks(options: IRunnerOptions, bus: MessageBus, writeError = true) {
     let { taskFile, workingDirectory } = options;
@@ -281,7 +281,7 @@ export async function run(
         topLevelTasks.push(task);
     }
 
-    const state = new TaskState();
+    const state = new TaskContext();
     state.set("qtr", {
         'options': options,
         'debug': isDebug(),

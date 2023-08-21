@@ -1,16 +1,16 @@
-import { ITask, ITaskDefinition, ITaskState } from "../tasks/interfaces.ts";
+import { ITask, ITaskState, ITaskContext } from "../tasks/interfaces.ts";
 import { defaultTimeout } from "./constants.ts";
 import { MessageBus } from "./message_bus.ts";
 import { ITaskResult } from "./interfaces.ts";
 import { TaskCancellationMessage, TaskEndMessage, TaskSkippedMessage, TaskStartMessage, TaskTimeoutMessage, UnhandledErrorMessage } from "./messages.ts";
 import { dotenv, underscore } from "../../dep.ts";
 import { PsOutput } from "../../tasks/core/core.ts";
-import { TaskState } from "../tasks/task_state.ts";
+import { TaskContext } from "../tasks/task_context.ts";
 import { env, fs } from "../../mod.ts";
 
 export function handleTask(
     task: ITask,
-    state: ITaskState,
+    state: ITaskContext,
     timeout = defaultTimeout,
     cancellationToken: AbortSignal,
     
@@ -86,7 +86,7 @@ function _u(value: string) {
 
 export async function handleTasks(
     tasks: ITask[], 
-    state: TaskState,
+    state: TaskContext,
     messageBus: MessageBus, 
     timeout = defaultTimeout,
     cancellationToken: AbortSignal) {
@@ -95,12 +95,12 @@ export async function handleTasks(
 
     const taskStates = {} as Record<string, unknown>;
 
-    let nextState = new TaskState(state);
+    let nextState = new TaskContext(state);
     for (const task of tasks) {
         const lastState = nextState;
-        nextState = new TaskState(state);
+        nextState = new TaskContext(state);
         nextState.set("env", lastState.env);
-        const taskState : ITaskDefinition = {
+        const taskState : ITaskState = {
             'id': task.id,
             'name': task.name,
             'description': task.description,
@@ -159,9 +159,6 @@ export async function handleTasks(
 
         const to = task.timeout ?? timeout ?? defaultTimeout;
         try {
-            
-
-
             messageBus.send(new TaskStartMessage(task));
             const result = await handleTask(task, nextState, to, cancellationToken);
             const envFile = env.get("QTR_ENV")

@@ -3,7 +3,7 @@
 A flexible task runner that lets you write common tasks in TypeScript using Deno.
 
 QTR allows one to run shell tasks or use Deno's built in functionality, Deno's std
-library, npm modules (that currently run in deno), or other deno/es 6 modules.
+library, npm modules (that currently run in deno), or other deno / es 6 modules.
 
 Deno will allow anyone to share tasks through es6 modules which can be imported
 just by using the import keyword or function.
@@ -15,16 +15,17 @@ variables and the path variable), and ps (process). All importable from the
 
 ## Install
 
-Use deno to install by running `deno install --unstable -qAn qtr "https://deno.land/x/qtr@{VERSION}/cli.ts"`
-where `{VERSION}` is a specific version number.
+Use deno to install the cli as a named script by
+running `deno install --unstable -qAn qtr "https://deno.land/x/qtr@{VERSION}/cli.ts"`
+where `{VERSION}` is a specific version number that has been released.
 
-Shell example.
+To install qtr, run:
 
 ```bash
-deno install --unstable -qAn qtr "https://deno.land/x/qtr@0.0.3/cli.ts"
+deno install --unstable -qAn qtr "https://deno.land/x/qtr@{VERSION}/cli.ts"
 ```
 
-To uninstall run:
+To uninstall qtr, run:
 
 ```bash
 deno uninstall qtr
@@ -35,7 +36,7 @@ deno uninstall qtr
 The task runner looks for a `./quasar_tasks.ts` or a `./.quasar/tasks.ts` file.
 
 The use case for the `.quasar` folder is to allow a separate folder to setup
-Deno within a tool like vscode where the deno extension works best in a single folder
+Deno within an editor like vscode where the deno extension works best in a single folder
 or to group all related files in a single folder.
 
 ```typescript
@@ -57,16 +58,23 @@ task("hello", () => {
     console.log("hello world");
 });
 
-task("dotnet:restore", async () => {
+task("dotnet_restore", async () => {
     const o = await ps.run("dotnet", "restore", sln);
     o.throwOrContinue();
     // see the PsOutput object
     console.log(o);
 });
 
-task("dotnet:build", ["dotnet:restore"], async () => {
-    const o = await ps.run("dotnet", "build", sln, "-c", "Release")
-    o.throwOrContinue();
+task("dotnet_build", ["dotnet_restore"], (ctx) => {
+    // view what is available in the context 
+    // such as previous tasks states, environment variables, etc.
+    console.log(ctx);
+    console.log(os.isWindows ? ctx.env["USERPROFILE"] : ctx.env["HOME"])
+    console.log(ctx.tasks.dotnet_restore)
+
+    // exit code will be handed by the task runner when PsOutput or Prosmise<PsOutput> 
+    // is returned.
+    return ps.run("dotnet", "build", sln, "-c", "Release")
 });
 
 task({
@@ -74,24 +82,43 @@ task({
     name: "echo =)",
     description: "runs the echo command",
     skip: true, // skips running this task
+    force: false, // will force the task to run, even if previous tasks fail
     run: async function() {
-       if(os.isWindows) {
-            const o = await scriptRunner.runScript("pwsh", "echo 'hello'");
-            o.throwOrContinue(); // throws when the exit code is not 0
-       } else {
-            const o = await ps.capture("echo", "'hello'");
-            o.throwOrContinue();
-       }
+        if(os.isWindows) {
+            // throws when the exit code is not 0
+            await scriptRunner.runScript("pwsh", "echo 'hello'")
+                .then(o => o.throwOrContinue());
+        } else {
+            await ps.capture("echo", "'hello'")
+                .then(o => o.throwOrContinue());
+        }
+    }
+});
+
+task({
+    id: "echo2",
+    name: "echo2 =)",
+    description: "runs the echo command",
+    skip: false, // skips running this task
+    run: async function() {
+        // returning either PsOutput or Promise<PsOutput>
+        // will trigger the task runner to handle the exit code for you. e.g when 
+        // exit code is not equal to zero, it will throw.
+        if(os.isWindows) {
+            return scriptRunner.runScript("pwsh", "echo 'hello'");
+        } else {
+            return ps.capture("echo", "'hello'");
+        }
     }
 });
 
 // runs an inline powershell script calling pwsh.exe
-// bash, sh, pwsh, and powershell are currently supported.
+// The following shells are supported: bash, sh, pwsh, and powershell.
 
 // first parameter is the id of the task.
 // second is the name of the shell
 // third is the inline script 
-shellTask("print:json", "pwsh", ```
+shellTask("print_json", "pwsh", ```
 $content = Get-Content "global.json" -Raw | ConvertFrom-Json
 
 Write-Host $content
@@ -99,7 +126,7 @@ Write-Host $content
 ```);
 
 
-shellTaskFile("run:script", "bash", "path/to/script.sh");
+shellTaskFile("run_script", "bash", "path/to/script.sh");
 
 task("default", ["hello"]);
 
@@ -126,21 +153,33 @@ qtr
 Run a specific task and all task dependencies
 
 ```bash
-# runs the build taks
+# runs the build task
 qtr build
 ```
 
 Run a specific task and skip all dependencies
 
 ```bash
-# runs the build taks
+# runs the build task and skips any deps
 qtr build --skip-deps
 ```
 
-Run multiple tasks
+Run multiple tasks in order of task names
 
 ```bash
 qtr build test
+```
+
+Pass in environment variables
+
+```bash
+qtr build -e MY_VAR="VALUE" -e MY_OTHER_VAR="VALUE2"
+```
+
+Pass in environment variable files
+
+```bash
+qtr build --ev "./path/to/.env"
 ```
 
 Help
