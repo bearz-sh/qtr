@@ -1,5 +1,5 @@
 import { IS_WINDOWS, NEW_LINE } from "../../os/deps.ts";
-import { IPartialShellFileTask, IPartialShellTask, ITask, ITaskBuilder } from "./interfaces.ts";
+import { IPartialShellFileTask, IPartialShellTask, ITask, ITaskBuilder, ITaskContext } from "./interfaces.ts";
 import { getTasks } from "./task_collection.ts";
 import { scriptRunner } from "../../tasks/core/script_runner.ts";
 import {} from "../../tasks/bash/register_script_runner.ts";
@@ -23,7 +23,7 @@ export function shellTask(): ITaskBuilder {
                 }
 
                 const task = arguments[0] as IPartialShellTask;
-                const wrap = async function (_state: Map<string, unknown>, signal: AbortSignal): Promise<Record<string, unknown>> {
+                const wrap = async function (_state: ITaskContext, signal?: AbortSignal): Promise<Record<string, unknown>> {
                     const out = await scriptRunner.runScript(shell, script, {
                         signal: signal,
                     });
@@ -32,7 +32,7 @@ export function shellTask(): ITaskBuilder {
                         exitCode: out.code,
                         stdout: out.stdout,
                         stderr: out.stderr,
-                    }
+                    } as Record<string, unknown>;
                 };
                 return tasks.add({
                     id: task.id,
@@ -57,7 +57,7 @@ export function shellTask(): ITaskBuilder {
             throw new Error("Invalid arguments");
     }
 
-    const wrap = async function (_state: Map<string, unknown>, signal: AbortSignal): Promise<Record<string, unknown>> {
+    const wrap = async function (_state: ITaskContext, signal?: AbortSignal): Promise<Record<string, unknown>> {
         const out = await scriptRunner.runScript(shell, script, {
             signal: signal,
         });
@@ -117,7 +117,7 @@ export function shellFileTask(): ITaskBuilder {
                     }
                 }
 
-                const wrap = async function (_state: Map<string, unknown>, signal: AbortSignal): Promise<Record<string, unknown>> {
+                const wrap = async function (_state: ITaskContext, signal?: AbortSignal): Promise<Record<string, unknown>> {
                     const out = await scriptRunner.runFile(shell, file, {
                         signal: signal,
                     });
@@ -168,7 +168,7 @@ export function shellFileTask(): ITaskBuilder {
             throw new Error("Invalid arguments");
     }
 
-    const wrap = async function (_state: Map<string, unknown>, signal: AbortSignal): Promise<void> {
+    const wrap = async function (_state: ITaskContext, signal?: AbortSignal): Promise<void> {
         const out = await scriptRunner.runFile(shell, file, {
             signal: signal,
         });
