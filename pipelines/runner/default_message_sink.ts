@@ -86,7 +86,7 @@ export function defaultMessageSink(message: Message): void {
             break;
         case "task-cancelled":
             {
-                const msg = message as TaskTimeoutMessage;
+                const msg = message as TaskCancellationMessage;
                 const output = `Task ${msg.taskResult.task.name} cancelled.`
                 hostWriter.writeLine(supportsColor ? yellow(output) : output);
                 hostWriter.endGroup();

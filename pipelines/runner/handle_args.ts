@@ -23,7 +23,7 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
             "working-directory": Deno.cwd(),
             list: false,    
             "skip-deps": false,
-            timeout: 3 * 60,
+            timeout: 3 * 60 * 60,
             help: false,
             "task-file": undefined,
             "env-file": [],
@@ -60,7 +60,7 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
 
     const timeoutValue = flags.timeout || flags.t;
 
-    let to =  3 * 60;
+    let to =  3 * 60 * 60;
     if (typeof timeoutValue === "string") {
         to = Number(timeoutValue);
     } else if (typeof timeoutValue !== "number") {
@@ -68,7 +68,7 @@ export function handleArgs(args: string[], hostWriter: IHostWriter) {
     }
 
     if (isNaN(to)) {
-        to = 3 * 60;
+        to = 3 * 60 * 60;
     }
 
     const help = (flags["help"] || flags["h"]) === true;

@@ -290,7 +290,7 @@ export async function run(
     state.set("env", env.toObject());
     state.set("tasks", {});
 
-    const timeout = options.timeout ?? 3 * 60;
+    const timeout = options.timeout ?? 3 * 60 * 60;
     let cancellationToken: AbortSignal;
     let cancellationController: AbortController | undefined;
     let handle: number | undefined;

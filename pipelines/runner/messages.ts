@@ -70,7 +70,7 @@ export class TaskStartMessage extends Message
 
 export class TaskCancellationMessage extends Message
 {
-    constructor(public readonly task: ITaskResult, public readonly signal: AbortSignal)
+    constructor(public readonly taskResult: ITaskResult, public readonly signal: AbortSignal)
     {
         super("task-cancelled");
     }
