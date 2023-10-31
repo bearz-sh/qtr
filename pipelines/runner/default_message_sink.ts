@@ -7,7 +7,8 @@ import {
     TaskStartMessage, 
     TaskTimeoutMessage,
     TaskResultsMessage,
-    UnhandledErrorMessage } 
+    UnhandledErrorMessage, 
+    TaskCancellationMessage} 
     from "./messages.ts";
 import { getDebug, getHostWriter, getTasks, getVerbose } from "./globals.ts";
 import { VERSION } from "../../mod_info.ts";
